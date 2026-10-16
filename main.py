@@ -2,7 +2,7 @@ import numpy as np
 
 from scipy.signal import chirp
 from start_sys_params import start_parametrs, clear_console
-from sign_create import make_signal,sign_status_table
+from sign_create import make_signal,sign_status_table, sign_plt
 import matplotlib.pyplot as plt
 
 
@@ -27,6 +27,6 @@ if __name__ == "__main__":
         ('DSSS',          dsss),
         ('ЛЧМ passband',  lfm_rf),
     ])
-
+    sign_plt(lfm)
 
     plt.show()

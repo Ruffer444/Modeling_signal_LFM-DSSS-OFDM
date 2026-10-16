@@ -1,6 +1,6 @@
 import numpy as np
 # from scipy.signal import chirp
-
+import matplotlib.pyplot as plt
 # Функция чтобы создать сигналы, пока без шума (lFM,HFM,OFDM,DSSS)
 def make_signal(kind,fs=48e3,T=None,f0=4e3,f1=16e3,N_fft=512,
                 N_cp=64, N_sym=8, mod_order=4,
@@ -64,10 +64,17 @@ def make_signal(kind,fs=48e3,T=None,f0=4e3,f1=16e3,N_fft=512,
                 case _:
                     raise ValueError("mod_order: 2 или 4")
 
-            syms = np.fft.ifft(qam, axis=1) * N_fft
-            syms_cp = np.concatenate([syms[:, -N_cp:],syms], axis=1)
+            syms = np.fft.ifft(qam, axis=1)
+
+            if N_cp > 0:
+                syms_cp = np.concatenate(
+                    [syms[:, -N_cp:], syms],
+                axis=1
+        )
+            else:
+                syms_cp = syms
             bb = syms_cp.ravel().astype(complex)
-            bb = bb / np.sqrt(np.mean(np.abs(bb)**2))
+            bb /= np.sqrt(np.mean(np.abs(bb)**2))
             # print(f' Имя = {kind} , Длинна = {len(bb)} , Тип данных: {bb.dtype} , Максимум:{np.max(np.abs(bb))}')
 
         case _:
@@ -93,3 +100,35 @@ def sign_status_table(signals):
         papr = 10*np.log10(peak**2 / rms**2) if rms > 0 else float('inf')
         print(f'{name:<20}{len(x):>8}{str(x.dtype):>14}'
               f'{peak:>10.3f}{rms:>10.3f}{papr:>10.2f}')
+
+
+def sign_plt(signals, fs=48e3, name='signal'):
+    """Отрисовка сигнала: время, мгновенная частота, спектр."""
+    x = np.asarray(signals)
+    t = np.arange(len(x)) / fs
+
+    plt.figure(figsize=(10, 9))
+
+    plt.subplot(3, 1, 1)
+    if np.iscomplexobj(x):
+        plt.plot(t, x.real, label='Re')
+        plt.plot(t, x.imag, label='Im')
+        plt.plot(t, np.abs(x), 'k', alpha=0.6, label='|x|')
+        plt.legend(fontsize=8)
+    else:
+        plt.plot(t, x)
+    plt.title(name); plt.xlabel('t, с'); plt.ylabel('амплитуда'); plt.grid(alpha=0.3)
+
+    plt.subplot(3, 1, 2)
+    plt.plot(t[1:], np.diff(np.unwrap(np.angle(x))) * fs / (2 * np.pi) / 1e3)
+    plt.xlabel('t, с'); plt.ylabel('f, кГц'); plt.title('мгновенная частота'); plt.grid(alpha=0.3)
+
+    plt.subplot(3, 1, 3)
+    X = np.fft.fftshift(np.fft.fft(x))
+    plt.plot(np.fft.fftshift(np.fft.fftfreq(len(x), 1 / fs)) / 1e3,
+             20 * np.log10(np.abs(X) / np.abs(X).max() + 1e-12))
+    plt.xlabel('f, кГц'); plt.ylabel('|X|, дБ'); plt.title('спектр')
+    plt.ylim(-80, 5); plt.grid(alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
