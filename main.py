@@ -1,12 +1,20 @@
 from start_sys_params import start_parametrs, clear_console
 from sign_create import make_signal, sign_status_table, sign_plt
+import matplotlib.pyplot as plt
 from create_insert_msg_to_signal import (
     show_encoding, show_capacity,
     transmit, run_link_packet,
     plot_ofdm_constellation, plot_dsss_correlation, plot_chirp_bpsk,
     plot_ber_per_vs_snr,
 )
-import matplotlib.pyplot as plt
+from window import (
+    plot_windows, plot_spectrum_windows,
+    compare_windows_on_chirp,
+)
+from effect import (
+    run_range_demo, run_multitarget_demo,
+    run_doppler_demo, run_2d_map, run_multipath_demo,  
+)
 
 if __name__ == "__main__":
     clear_console()
@@ -114,6 +122,53 @@ if __name__ == "__main__":
     #                     T=100e-3, f0=4e3, f1=16e3, n_bits_chirp=1000)
     # plot_ber_per_vs_snr('hfm',  message, fs,
     #                     T=100e-3, f0=4e3, f1=16e3, n_bits_chirp=1000)
+
+    # ==========================================================
+    # ЭТАП 8: окна
+    # ==========================================================
+    print(' ЭТАП 8: СРАВНЕНИЕ ОКОН')
+    # plot_windows()
+    # plot_spectrum_windows(tx_ofdm_data, fs=fs,
+    #                       title='OFDM с сообщением: спектр с разными окнами')
+    # compare_windows_on_chirp(fs=fs, T=100e-3, f0=4e3, f1=16e3)
+
+    # ==========================================================
+    # ЭТАП 9: задержка и дальность
+    # ==========================================================
+    print(' ЭТАП 9: ЗАДЕРЖКА И ДАЛЬНОСТЬ')
+    # --- Часть 1: что будет при fs = 100 кГц (глобальный) ---
+    # Демонстрация квантования: 1000 и 5000 м «съедаются» шагом 1500 м.
+    print('--- Часть 1: радар на fs=100 кГц (глобальный) — видно ограничение ---')
+    # for R_target in (1000, 3000, 5000):
+    #     run_range_demo(R_target, fs=fs, window_name='hamming', snr_db=20,
+    #                 T=100e-3, f0=4e3, f1=16e3)
+
+    # --- Часть 2: отдельные параметры для радара ---
+    # fs=1 МГц, чирп 50…450 кГц, T=10 мс.
+    # Шаг = 150 м, разрешение = 375 м — всё три цели видны.
+    print()
+    print('--- Часть 2: радар с fs=1 МГц, B=400 кГц, T=10 мс ---')
+    fs_radar = 1e6
+    # for R_target in (1000, 3000, 5000):
+    #     run_range_demo(R_target, fs=fs_radar, window_name='hamming', snr_db=20,
+    #                 T=10e-3, f0=50e3, f1=450e3)
+
+    # --- Часть 3: две цели рядом ---
+    # 1000 и 3000 м — 2000 м друг от друга > ΔR=375 м → видны раздельно.
+    # Сильная (1000 м, амп=1.0) и слабая (3000 м, амп=0.05 = −26 дБ).
+    # Прямоугольное окно маскирует слабую (боковые −13 дБ), hamming — вытаскивает.
+    print()
+    print('--- Часть 3: две цели (1000 м — сильная, 5000 м — слабая −26 дБ) ---')
+    # run_multitarget_demo(
+    #     fs=fs_radar,
+    #     targets_m=[1000, 5000],
+    #     amps=[1.0, 0.05],
+    #     snr_db=20,
+    #     T=10e-3, f0=50e3, f1=450e3,
+    #     windows=('rect', 'hamming'),
+    # )
+ 
+
 
     # ==========================================================
     # ИТОГ
